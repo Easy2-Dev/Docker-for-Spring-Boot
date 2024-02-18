@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  db:
+    build:
+      context: .
+      dockerfile: ./dockerfiles/postgresql.Dockerfile
+    image: app_db
+    container_name: db
+    ports:
+      - 5432:5432
+    volumes:
+      - ./volumes/postgres/postgresql:/var/lib/postgresql/data
+    env_file:
+      - ./envs/db.env
+
+  pgadmin4:
+    depends_on:
+      - db
+    build:
+      context: .
+      dockerfile: ./dockerfiles/pgadmin.Dockerfile
+    image: db_manager
+    restart: always
+    container_name: db_manager
+    env_file:
+      - ./envs/pgadmin.env
+    ports:
+      - 9001:9001
+    volumes:
+      - ./volumes/pgadmin:/var/lib/pgadmin
+
+  app:
+    depends_on:
+      - db
+    build:
+      context: .
+      dockerfile: ./dockerfiles/dev.Dockerfile
+    image: spring_demo
+    ports:
+      - 8080:8080
+    restart: unless-stopped
+    container_name: sprapp
+    env_file:
+      - ./envs/app.env
+    volumes:
+      - ./demo/src/:/app/src
